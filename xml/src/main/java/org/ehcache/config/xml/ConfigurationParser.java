@@ -356,6 +356,20 @@ class ConfigurationParser {
             }
             return null;
           }
+
+          @Override
+          public Integer eventProcessingQueues() {
+            Integer eventProcessingQueueCount = null;
+            for (BaseCacheType source : sources) {
+              final CacheIntegration integration = source.getIntegration();
+              final CacheIntegration.EventProcessingQueues eventProcessingQueues = integration != null ? integration.getEventProcessingQueues() : null;
+              if (eventProcessingQueues != null) {
+                eventProcessingQueueCount = eventProcessingQueues.getCount();
+                break;
+              }
+            }
+            return eventProcessingQueueCount != null ? eventProcessingQueueCount : null;
+          }
         });
       }
     }
@@ -544,6 +558,13 @@ class ConfigurationParser {
             final CacheIntegration.Writebehind writebehind = integration != null ? integration.getWritebehind(): null;
             return writebehind != null ? new XmlWriteBehind(writebehind) : null;
           }
+
+          @Override
+          public Integer eventProcessingQueues() {
+            final CacheIntegration integration = cacheTemplate.getIntegration();
+            final CacheIntegration.EventProcessingQueues eventProcessingQueues = integration != null ? integration.getEventProcessingQueues(): null;
+            return eventProcessingQueues != null ? eventProcessingQueues() : null;
+          }
         });
       }
     }
@@ -623,6 +644,8 @@ class ConfigurationParser {
     Iterable<ResourcePool> resourcePools();
     
     WriteBehind writeBehind();
+
+    Integer eventProcessingQueues();
 
   }
 

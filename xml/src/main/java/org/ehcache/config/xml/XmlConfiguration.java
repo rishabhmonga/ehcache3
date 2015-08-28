@@ -26,6 +26,7 @@ import org.ehcache.config.copy.DefaultCopyProviderConfiguration;
 import org.ehcache.config.event.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.ResourcePool;
 import org.ehcache.config.ResourcePoolsBuilder;
+import org.ehcache.config.event.CacheEventNotificationServiceConfigurationBuilder;
 import org.ehcache.config.loaderwriter.DefaultCacheLoaderWriterConfiguration;
 import org.ehcache.config.persistence.CacheManagerPersistenceConfiguration;
 import org.ehcache.config.serializer.DefaultSerializerConfiguration;
@@ -295,6 +296,11 @@ public class XmlConfiguration implements Configuration {
           builder = builder.add(listenerBuilder);
         }
       }
+      if (cacheDefinition.eventProcessingQueues() != null) {
+        CacheEventNotificationServiceConfigurationBuilder configurationBuilder
+            = CacheEventNotificationServiceConfigurationBuilder.withEventProcessingQueueCount(cacheDefinition.eventProcessingQueues());
+        builder = builder.add(configurationBuilder);
+      }
       final CacheConfiguration<?, ?> config = builder.buildConfig(keyType, valueType, evictionVeto, evictionPrioritizer);
       cacheConfigurations.put(alias, config);
     }
@@ -483,6 +489,11 @@ public class XmlConfiguration implements Configuration {
             .eventOrdering(EventOrdering.valueOf(listener.eventOrdering().value()));
         builder = builder.add(listenerBuilder);
       }
+    }
+    if (cacheTemplate.eventProcessingQueues() != null) {
+      CacheEventNotificationServiceConfigurationBuilder configurationBuilder
+          = CacheEventNotificationServiceConfigurationBuilder.withEventProcessingQueueCount(cacheTemplate.eventProcessingQueues());
+      builder = builder.add(configurationBuilder);
     }
     ResourcePoolsBuilder resourcePoolsBuilder = newResourcePoolsBuilder();
     for (ResourcePool resourcePool : cacheTemplate.resourcePools()) {
