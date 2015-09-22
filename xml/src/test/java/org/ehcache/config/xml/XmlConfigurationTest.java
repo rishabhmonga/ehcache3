@@ -45,6 +45,7 @@ import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.ehcache.expiry.Expiry;
 import org.ehcache.internal.copy.SerializingCopier;
+import org.ehcache.spi.ServiceLocator;
 import org.ehcache.spi.copy.Copier;
 import org.ehcache.spi.loaderwriter.WriteBehindConfiguration;
 import org.ehcache.spi.serialization.Serializer;
@@ -129,7 +130,7 @@ public class XmlConfigurationTest {
     assertThat(xmlConfig.getCacheConfigurations().get("foo").getEvictionPrioritizer(), sameInstance((EvictionPrioritizer)Eviction.Prioritizer.LFU));
 
     CacheConfigurationBuilder<Object, Object> example = xmlConfig.newCacheConfigurationBuilderFromTemplate("example");
-    assertThat(example.buildConfig(Object.class, Object.class).getEvictionPrioritizer(), sameInstance((EvictionPrioritizer)Eviction.Prioritizer.LFU));
+    assertThat(example.buildConfig(Object.class, Object.class).getEvictionPrioritizer(), sameInstance((EvictionPrioritizer) Eviction.Prioritizer.LFU));
   }
 
   @Test
@@ -184,7 +185,7 @@ public class XmlConfigurationTest {
     assertThat(xmlConfig.newCacheConfigurationBuilderFromTemplate("example"), notNullValue());
     final CacheConfigurationBuilder<String, String> example = xmlConfig.newCacheConfigurationBuilderFromTemplate("example", String.class, String.class);
     assertThat(example.buildConfig(String.class, String.class).getExpiry(),
-        equalTo((Expiry)Expirations.timeToLiveExpiration(new Duration(30, TimeUnit.SECONDS))));
+        equalTo((Expiry) Expirations.timeToLiveExpiration(new Duration(30, TimeUnit.SECONDS))));
 
     try {
       xmlConfig.newCacheConfigurationBuilderFromTemplate("example", String.class, Number.class);
@@ -394,8 +395,7 @@ public class XmlConfigurationTest {
     assertThat(factoryConfiguration.getTransientSerializers().get("java.lang.CharSequence"), Matchers.<Class<? extends Serializer>>equalTo(TestSerializer.class));
     assertThat(factoryConfiguration.getTransientSerializers().get("java.lang.Number"), Matchers.<Class<? extends Serializer>>equalTo(TestSerializer2.class));
     assertThat(factoryConfiguration.getTransientSerializers().get("java.lang.Long"), Matchers.<Class<? extends Serializer>>equalTo(TestSerializer3.class));
-    assertThat(factoryConfiguration.getTransientSerializers()
-        .get("java.lang.Integer"), Matchers.<Class<? extends Serializer>>equalTo(TestSerializer4.class));
+    assertThat(factoryConfiguration.getTransientSerializers().get("java.lang.Integer"), Matchers.<Class<? extends Serializer>>equalTo(TestSerializer4.class));
 
 
     List<ServiceConfiguration<?>> orderedServiceConfigurations = new ArrayList<ServiceConfiguration<?>>(xmlConfig.getCacheConfigurations().get("baz").getServiceConfigurations());
@@ -583,16 +583,9 @@ public class XmlConfigurationTest {
     XmlConfiguration xmlConfig = new XmlConfiguration(resource);
     assertThat(xmlConfig.getCacheConfigurations().size(), is(2));
 
-    Collection<?> configuration = xmlConfig.getCacheConfigurations().get("bar").getServiceConfigurations();
-    checkEventNotificationConfigurationExists(configuration);
-    Collection<?> templateConfiguration = xmlConfig.getCacheConfigurations().get("foo").getServiceConfigurations();
-    checkEventNotificationConfigurationExists(templateConfiguration);
-    DefaultCacheEventNotificationServiceConfiguration factoryConfiguration = null;
-    for (Object o : configuration) {
-      if(o instanceof DefaultCacheEventNotificationServiceConfiguration) {
-        factoryConfiguration = (DefaultCacheEventNotificationServiceConfiguration)o;
-      }
-    }
+    DefaultCacheEventNotificationServiceConfiguration factoryConfiguration = ServiceLocator.findSingletonAmongst(
+        DefaultCacheEventNotificationServiceConfiguration.class, xmlConfig.getCacheConfigurations().get("foo")
+            .getServiceConfigurations().toArray());
     assertNotNull(factoryConfiguration);
     assertThat(factoryConfiguration.getNumberOfEventProcessingQueues(), is(5));
   }
@@ -601,16 +594,6 @@ public class XmlConfigurationTest {
     int count = 0;
     for (Object o : configuration) {
       if(o instanceof DefaultCacheEventListenerConfiguration) {
-        count++;
-      }
-    }
-    assertThat(count, is(1));
-  }
-
-  private void checkEventNotificationConfigurationExists(Collection<?> configuration) {
-    int count = 0;
-    for (Object o : configuration) {
-      if(o instanceof DefaultCacheEventNotificationServiceConfiguration) {
         count++;
       }
     }
