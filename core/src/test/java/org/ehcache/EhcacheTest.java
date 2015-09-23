@@ -17,6 +17,7 @@
 package org.ehcache;
 
 import org.ehcache.config.CacheConfiguration;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.BulkCacheWritingException;
 import org.ehcache.exceptions.CacheAccessException;
@@ -461,12 +462,12 @@ public class EhcacheTest {
     }
 
     @Override
-    public Map<String, ValueHolder<String>> bulkCompute(Set<? extends String> keys, Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> remappingFunction) throws CacheAccessException {
+    public Map<String, ValueHolder<String>> bulkCompute(Set<? extends String> keys, Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> remappingFunction, final CacheEventNotificationService<String, String> eventNotificationService) throws CacheAccessException {
       throw new UnsupportedOperationException("TODO Implement me!");
     }
 
     @Override
-    public Map<String, ValueHolder<String>> bulkCompute(Set<? extends String> keys, Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException {
+    public Map<String, ValueHolder<String>> bulkCompute(Set<? extends String> keys, Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<String, String> eventNotificationService) throws CacheAccessException {
       throw new UnsupportedOperationException("TODO Implement me!");
     }
   }

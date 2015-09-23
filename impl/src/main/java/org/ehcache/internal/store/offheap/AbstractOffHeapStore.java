@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import org.ehcache.Cache;
 import org.ehcache.config.EvictionVeto;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.CacheEvents;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.CacheAccessException;
@@ -453,12 +454,12 @@ public abstract class AbstractOffHeapStore<K, V> implements AuthoritativeTier<K,
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException {
-    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE);
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
+    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE, eventNotificationService);
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException {
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
     Map<K, ValueHolder<V>> result = new HashMap<K, ValueHolder<V>>();
     for (K key : keys) {
       checkKey(key);
@@ -493,6 +494,7 @@ public abstract class AbstractOffHeapStore<K, V> implements AuthoritativeTier<K,
         }
       };
       ValueHolder<V> computed = compute(key, biFunction, replaceEqual);
+      eventNotificationService.fireAllEvents();
       result.put(key, computed);
     }
     return result;

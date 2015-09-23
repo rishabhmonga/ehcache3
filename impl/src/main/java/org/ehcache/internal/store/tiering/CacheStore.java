@@ -17,6 +17,7 @@ package org.ehcache.internal.store.tiering;
 
 import org.ehcache.Cache;
 import org.ehcache.CacheConfigurationChangeListener;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.function.BiFunction;
@@ -294,9 +295,9 @@ public class CacheStore<K, V> implements Store<K, V> {
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException {
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
     try {
-      return authoritativeTier.bulkCompute(keys, remappingFunction);
+      return authoritativeTier.bulkCompute(keys, remappingFunction, eventNotificationService);
     } finally {
       for (K key : keys) {
         cachingTier().invalidate(key);
@@ -305,9 +306,9 @@ public class CacheStore<K, V> implements Store<K, V> {
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException {
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
     try {
-      return authoritativeTier.bulkCompute(keys, remappingFunction, replaceEqual);
+      return authoritativeTier.bulkCompute(keys, remappingFunction, replaceEqual, eventNotificationService);
     } finally {
       for (K key : keys) {
         cachingTier().invalidate(key);

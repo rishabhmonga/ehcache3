@@ -22,6 +22,7 @@ import org.ehcache.config.EvictionVeto;
 import org.ehcache.config.StoreConfigurationImpl;
 import org.ehcache.config.copy.CopierConfiguration;
 import org.ehcache.config.copy.DefaultCopierConfiguration;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.expiry.Duration;
@@ -599,12 +600,12 @@ public class XAStore<K, V> implements Store<K, V> {
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException {
-    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE);
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
+    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE, eventNotificationService);
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException {
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
     Map<K, ValueHolder<V>> result = new HashMap<K, ValueHolder<V>>();
     for (K key : keys) {
       checkKey(key);

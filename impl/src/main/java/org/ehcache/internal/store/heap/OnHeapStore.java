@@ -26,6 +26,7 @@ import org.ehcache.config.ResourcePool;
 import org.ehcache.config.ResourcePools;
 import org.ehcache.config.ResourceType;
 import org.ehcache.config.units.EntryUnit;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.CacheEvents;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.CacheAccessException;
@@ -839,12 +840,12 @@ public class OnHeapStore<K, V> implements Store<K,V>, CachingTier<K, V> {
   }
 
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Entry<? extends K, ? extends V>>, Iterable<? extends Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException {
-    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE);
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Entry<? extends K, ? extends V>>, Iterable<? extends Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
+    return bulkCompute(keys, remappingFunction, REPLACE_EQUALS_TRUE, eventNotificationService);
   }
   
   @Override
-  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K,? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException {
+  public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, final Function<Iterable<? extends Entry<? extends K, ? extends V>>, Iterable<? extends Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
  
     // The Store here is free to slice & dice the keys as it sees fit
     // As this OnHeapStore doesn't operate in segments, the best it can do is do a "bulk" write in batches of... one!
@@ -871,6 +872,7 @@ public class OnHeapStore<K, V> implements Store<K,V>, CachingTier<K, V> {
         }
       }, replaceEqual);
       result.put(key, newValue);
+      eventNotificationService.fireAllEvents();
     }
     return result;
   }

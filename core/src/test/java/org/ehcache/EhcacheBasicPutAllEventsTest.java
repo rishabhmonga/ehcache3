@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ehcache.event.CacheEvent;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expiry;
@@ -126,7 +127,7 @@ public class EhcacheBasicPutAllEventsTest extends EhcacheEventsTestBase {
   public void testPutAllEmptyRequestCacheAccessExceptionBeforeNoWriter() throws Exception {
     buildStore(getEntryMap(KEY_SET_A, KEY_SET_B));
     doThrow(new CacheAccessException("")).when(store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), any(CacheEventNotificationService.class));
     final Ehcache<String, String> ehcache = getEhcache();
     ehcache.putAll(Collections.<String, String>emptyMap());
     verify(cacheEventListener, never()).onEvent(Matchers.<CacheEvent<String, String>>any());

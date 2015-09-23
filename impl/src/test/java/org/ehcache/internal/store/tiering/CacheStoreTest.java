@@ -15,6 +15,7 @@
  */
 package org.ehcache.internal.store.tiering;
 
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.function.BiFunction;
 import org.ehcache.function.Function;
@@ -459,8 +460,9 @@ public class CacheStoreTest {
   public void testBulkCompute2Args() throws Exception {
     CachingTier<Number, CharSequence> cachingTier = mock(CachingTier.class);
     AuthoritativeTier<Number, CharSequence> authoritativeTier = mock(AuthoritativeTier.class);
+    CacheEventNotificationService<Number, CharSequence> eventNotificationService = mock(CacheEventNotificationService.class);
 
-    when(authoritativeTier.bulkCompute(any(Set.class), any(Function.class))).thenAnswer(new Answer<Map<Number, Store.ValueHolder<CharSequence>>>() {
+    when(authoritativeTier.bulkCompute(any(Set.class), any(Function.class), any(CacheEventNotificationService.class))).thenAnswer(new Answer<Map<Number, Store.ValueHolder<CharSequence>>>() {
       @Override
       public Map<Number, Store.ValueHolder<CharSequence>> answer(InvocationOnMock invocation) throws Throwable {
         Set<Number> keys = (Set) invocation.getArguments()[0];
@@ -489,7 +491,7 @@ public class CacheStoreTest {
       public Iterable<? extends Map.Entry<? extends Number, ? extends CharSequence>> apply(Iterable<? extends Map.Entry<? extends Number, ? extends CharSequence>> entries) {
         return new ArrayList<Map.Entry<? extends Number, ? extends CharSequence>>(Arrays.asList(newMapEntry(1, "one"), newMapEntry(2, "two"), newMapEntry(3, "three")));
       }
-    });
+    }, eventNotificationService);
 
     assertThat(result.size(), is(3));
     assertThat(result.get(1).value(), Matchers.<CharSequence>equalTo("one"));
@@ -499,15 +501,16 @@ public class CacheStoreTest {
     verify(cachingTier, times(1)).invalidate(1);
     verify(cachingTier, times(1)).invalidate(2);
     verify(cachingTier, times(1)).invalidate(3);
-    verify(authoritativeTier, times(1)).bulkCompute(any(Set.class), any(Function.class));
+    verify(authoritativeTier, times(1)).bulkCompute(any(Set.class), any(Function.class), any(CacheEventNotificationService.class));
   }
 
   @Test
   public void testBulkCompute3Args() throws Exception {
     CachingTier<Number, CharSequence> cachingTier = mock(CachingTier.class);
     AuthoritativeTier<Number, CharSequence> authoritativeTier = mock(AuthoritativeTier.class);
+    CacheEventNotificationService<Number, CharSequence> eventNotificationService = mock(CacheEventNotificationService.class);
 
-    when(authoritativeTier.bulkCompute(any(Set.class), any(Function.class), any(NullaryFunction.class))).thenAnswer(new Answer<Map<Number, Store.ValueHolder<CharSequence>>>() {
+    when(authoritativeTier.bulkCompute(any(Set.class), any(Function.class), any(NullaryFunction.class), any(CacheEventNotificationService.class))).thenAnswer(new Answer<Map<Number, Store.ValueHolder<CharSequence>>>() {
       @Override
       public Map<Number, Store.ValueHolder<CharSequence>> answer(InvocationOnMock invocation) throws Throwable {
         Set<Number> keys = (Set) invocation.getArguments()[0];
@@ -541,7 +544,7 @@ public class CacheStoreTest {
       public Boolean apply() {
         return true;
       }
-    });
+    }, eventNotificationService);
 
     assertThat(result.size(), is(3));
     assertThat(result.get(1).value(), Matchers.<CharSequence>equalTo("one"));
@@ -551,7 +554,7 @@ public class CacheStoreTest {
     verify(cachingTier, times(1)).invalidate(1);
     verify(cachingTier, times(1)).invalidate(2);
     verify(cachingTier, times(1)).invalidate(3);
-    verify(authoritativeTier, times(1)).bulkCompute(any(Set.class), any(Function.class), any(NullaryFunction.class));
+    verify(authoritativeTier, times(1)).bulkCompute(any(Set.class), any(Function.class), any(NullaryFunction.class), any(CacheEventNotificationService.class));
   }
 
   @Test

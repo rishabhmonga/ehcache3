@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ehcache.event.CacheEvent;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.BulkCacheWritingException;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.function.Function;
@@ -113,7 +114,7 @@ public class EhcacheBasicRemoveAllEventsTest extends EhcacheEventsTestBase {
   public void testRemoveAllThrowsBulkException() throws Exception {
     buildStore(getEntryMap(KEY_SET_A, KEY_SET_B));
     doThrow(new CacheAccessException("")).when(store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_C);
@@ -147,6 +148,16 @@ public class EhcacheBasicRemoveAllEventsTest extends EhcacheEventsTestBase {
    */
   private static Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> getAnyEntryIterableFunction() {
     return any(Function.class);
+  }
+
+  /**
+   * Returns a Mockito {@code any} Matcher for a {@code CacheEventNotificationService}.
+   *
+   * @return a Mockito {@code any} matcher for {@code CacheEventNotificationService}
+   */
+  @SuppressWarnings("unchecked")
+  private static CacheEventNotificationService<String, String> getAnyEventNotificationService() {
+    return any(CacheEventNotificationService.class);
   }
 
   private Ehcache<String, String> getEhcache() {

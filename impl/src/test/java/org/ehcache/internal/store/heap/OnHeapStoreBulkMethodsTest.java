@@ -17,6 +17,7 @@
 package org.ehcache.internal.store.heap;
 
 import org.ehcache.config.units.EntryUnit;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.expiry.Expirations;
 import org.ehcache.function.Function;
 import org.ehcache.internal.SystemTimeSource;
@@ -65,6 +66,7 @@ public class OnHeapStoreBulkMethodsTest {
   public void testBulkComputeFunctionGetsValuesOfEntries() throws Exception {
     @SuppressWarnings("rawtypes")
     Store.Configuration config = mock(Store.Configuration.class);
+    CacheEventNotificationService<Number, Number> eventNotificationService = mock(CacheEventNotificationService.class);
     when(config.getExpiry()).thenReturn(Expirations.noExpiration());
     when(config.getKeyType()).thenReturn(Number.class);
     when(config.getValueType()).thenReturn(Number.class);
@@ -95,7 +97,7 @@ public class OnHeapStoreBulkMethodsTest {
         }
         return newValues.entrySet();
       }
-    });
+    }, eventNotificationService);
 
     ConcurrentMap<Number, Number> check = new ConcurrentHashMap<Number, Number>();
     check.put(1, 4);
@@ -126,6 +128,7 @@ public class OnHeapStoreBulkMethodsTest {
   @Test
   public void testBulkComputeHappyPath() throws Exception {
     Store.Configuration<Number, CharSequence> configuration = mockStoreConfig();
+    CacheEventNotificationService<Number, CharSequence> eventNotificationService = mock(CacheEventNotificationService.class);
 
     OnHeapStore<Number, CharSequence> store = new OnHeapStore<Number, CharSequence>(configuration, SystemTimeSource.INSTANCE, DEFAULT_COPIER, DEFAULT_COPIER);
     store.put(1, "one");
@@ -143,7 +146,7 @@ public class OnHeapStoreBulkMethodsTest {
         }
         return newValues.entrySet();
       }
-    });
+    }, eventNotificationService);
 
     assertThat(result.size(), is(2));
     assertThat(result.get(1).value(), Matchers.<CharSequence>equalTo("un"));
@@ -156,6 +159,7 @@ public class OnHeapStoreBulkMethodsTest {
   @Test
   public void testBulkComputeStoreRemovesValueWhenFunctionReturnsNullMappings() throws Exception {
     Store.Configuration<Number, CharSequence> configuration = mockStoreConfig();
+    CacheEventNotificationService<Number, CharSequence> eventNotificationService = mock(CacheEventNotificationService.class);
 
     OnHeapStore<Number, CharSequence> store = new OnHeapStore<Number, CharSequence>(configuration, SystemTimeSource.INSTANCE, DEFAULT_COPIER, DEFAULT_COPIER);
     store.put(1, "one");
@@ -171,7 +175,7 @@ public class OnHeapStoreBulkMethodsTest {
         }
         return newValues.entrySet();
       }
-    });
+    }, eventNotificationService);
 
     assertThat(result.size(), is(3));
 
@@ -184,6 +188,7 @@ public class OnHeapStoreBulkMethodsTest {
   @Test
   public void testBulkComputeRemoveNullValueEntriesFromFunctionReturn() throws Exception {
     Store.Configuration<Number, CharSequence> configuration = mockStoreConfig();
+    CacheEventNotificationService<Number, CharSequence> eventNotificationService = mock(CacheEventNotificationService.class);
 
     OnHeapStore<Number, CharSequence> store = new OnHeapStore<Number, CharSequence>(configuration, SystemTimeSource.INSTANCE, DEFAULT_COPIER, DEFAULT_COPIER);
     store.put(1, "one");
@@ -205,7 +210,7 @@ public class OnHeapStoreBulkMethodsTest {
         }
         return result.entrySet();
       }
-    });
+    }, eventNotificationService);
 
     assertThat(result.size(), is(3));
     assertThat(result.get(1), is(nullValue()));

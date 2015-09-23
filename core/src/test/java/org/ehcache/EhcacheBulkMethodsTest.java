@@ -17,6 +17,7 @@
 package org.ehcache;
 
 import org.ehcache.config.CacheConfiguration;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.expiry.Expiry;
 import org.ehcache.function.Function;
 import org.ehcache.spi.cache.Store;
@@ -70,13 +71,13 @@ public class EhcacheBulkMethodsTest {
       put(3, "three");
     }});
 
-    verify(store).bulkCompute((Set<? extends Number>) Matchers.argThat(hasItems((Number)1, 2, 3)), any(Function.class));
+    verify(store).bulkCompute((Set<? extends Number>) Matchers.argThat(hasItems((Number)1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class));
   }
 
   @Test
   public void testPutAllWithWriter() throws Exception {
     Store<Number, CharSequence> store = mock(Store.class);
-    when(store.bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class))).thenAnswer(new Answer<Object>() {
+    when(store.bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class))).thenAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         Function function = (Function)invocation.getArguments()[1];
@@ -95,7 +96,7 @@ public class EhcacheBulkMethodsTest {
       put(3, "three");
     }});
 
-    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class));
+    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class));
     verify(cacheLoaderWriter).writeAll(argThat(hasItems(entry(1, "one"), entry(2, "two"), entry(3, "three"))));
   }
   
@@ -162,13 +163,13 @@ public class EhcacheBulkMethodsTest {
     ehcache.init();
     ehcache.removeAll(new HashSet<Number>(Arrays.asList(1, 2, 3)));
 
-    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class));
+    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class));
   }
 
   @Test
   public void testRemoveAllWithWriter() throws Exception {
     Store<Number, CharSequence> store = mock(Store.class);
-    when(store.bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class))).thenAnswer(new Answer<Object>() {
+    when(store.bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class))).thenAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         Function function = (Function)invocation.getArguments()[1];
@@ -182,7 +183,7 @@ public class EhcacheBulkMethodsTest {
     ehcache.init();
     ehcache.removeAll(new LinkedHashSet<Number>(Arrays.asList(1, 2, 3)));
 
-    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class));
+    verify(store).bulkCompute((Set<? extends Number>) argThat(hasItems(1, 2, 3)), any(Function.class), any(CacheEventNotificationService.class));
     verify(cacheLoaderWriter).deleteAll(argThat(hasItems(1, 2, 3)));
   }
 

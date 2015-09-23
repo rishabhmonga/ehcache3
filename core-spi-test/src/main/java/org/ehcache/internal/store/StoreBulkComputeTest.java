@@ -16,6 +16,7 @@
 
 package org.ehcache.internal.store;
 
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.function.Function;
 import org.ehcache.spi.cache.Store;
@@ -34,9 +35,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mock;
 
 /**
- * Test the {@link org.ehcache.spi.cache.Store#bulkCompute(java.util.Set, org.ehcache.function.Function)} contract of the
+ * Test the {@link Store#bulkCompute(Set, Function, org.ehcache.events.CacheEventNotificationService)} contract of the
  * {@link org.ehcache.spi.cache.Store Store} interface.
  * <p/>
  *
@@ -67,6 +69,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
   @SuppressWarnings({ "unchecked" })
   @SPITest
   public void remappingFunctionReturnsIterableOfEntriesForEachInputEntry() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     int nbElements = 10;
     for (long i = 0; i < nbElements; i++) {
@@ -87,7 +90,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
               }
               return update.entrySet();
             }
-          }
+          }, eventNotificationService
       );
       assertThat(mapFromRemappingFunction.keySet(), containsInAnyOrder((K[])inputKeys.toArray()));
     } catch (CacheAccessException e) {
@@ -98,6 +101,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
   @SuppressWarnings({ "unchecked" })
   @SPITest
   public void testWrongKeyType() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     int nbElements = 10;
     for (long i = 0; i < nbElements; i++) {
@@ -115,7 +119,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
         public Iterable<? extends Map.Entry<? extends K, ? extends V>> apply(Iterable<? extends Map.Entry<? extends K, ? extends V>> entries) {
           throw new AssertionError("Expected ClassCastException because the key is of the wrong type");
         }
-      });
+      }, eventNotificationService);
       throw new AssertionError("Expected ClassCastException because the key is of the wrong type");
     } catch (ClassCastException e) {
       // expected
@@ -126,6 +130,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
 
   @SPITest
   public void mappingIsRemovedFromStoreForNullValueEntriesFromRemappingFunction() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     int nbElements = 10;
     for (long i = 0; i < nbElements; i++) {
@@ -146,7 +151,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
           }
           return update.entrySet();
         }
-      });
+      }, eventNotificationService);
       for (K key : inputKeys) {
         assertThat(kvStore.get(key), is(nullValue()));
       }
@@ -157,6 +162,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
 
   @SPITest
   public void remappingFunctionGetsIterableWithMappedStoreEntryValueOrNull() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     final Map<K, V> mappedEntries = new HashMap<K, V>();
     int nbElements = 10;
@@ -187,7 +193,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
               }
               return update.entrySet();
             }
-          }
+          }, eventNotificationService
       );
     } catch (CacheAccessException e) {
       throw new LegalSPITesterException("Warning, an exception is thrown due to the SPI test");
@@ -196,6 +202,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
 
   @SPITest
   public void computeValuesForEveryKeyUsingARemappingFunction() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     final Map<K, V> computedEntries = new HashMap<K, V>();
     int nbElements = 10;
@@ -217,7 +224,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
           }
           return update.entrySet();
         }
-      });
+      }, eventNotificationService);
 
       for (K inputKey : inputKeys) {
         assertThat(kvStore.get(inputKey).value(), is(computedEntries.get(inputKey)));
@@ -230,6 +237,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
   @SuppressWarnings({ "unchecked" })
   @SPITest
   public void remappingFunctionProducesWrongKeyType() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     final Map<K, V> computedEntries = new HashMap<K, V>();
     int nbElements = 10;
@@ -255,7 +263,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
           }
           return update.entrySet();
         }
-      });
+      }, eventNotificationService);
       throw new AssertionError("Expected ClassCastException because the key is of the wrong type");
     } catch (ClassCastException cce) {
       //expected
@@ -267,6 +275,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
   @SuppressWarnings({ "unchecked" })
   @SPITest
   public void remappingFunctionProducesWrongValueType() throws Exception {
+    CacheEventNotificationService<K, V> eventNotificationService = mock(CacheEventNotificationService.class);
     Set<K> inputKeys = new HashSet<K>();
     final Map<K, V> computedEntries = new HashMap<K, V>();
     int nbElements = 10;
@@ -292,7 +301,7 @@ public class StoreBulkComputeTest<K, V> extends SPIStoreTester<K, V> {
           }
           return update.entrySet();
         }
-      });
+      }, eventNotificationService);
       throw new AssertionError("Expected ClassCastException because the value is of the wrong type");
     } catch (ClassCastException cce) {
       //expected

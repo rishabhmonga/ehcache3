@@ -16,6 +16,7 @@
 
 package org.ehcache;
 
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.BulkCacheWritingException;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.function.Function;
@@ -77,7 +78,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
   /**
    * A Mockito {@code ArgumentCaptor} for the {@code Set} argument to the
-   * {@link org.ehcache.spi.cache.Store#bulkCompute(Set, Function, NullaryFunction)
+   * {@link Store#bulkCompute(Set, Function, NullaryFunction, org.ehcache.events.CacheEventNotificationService)
    *    Store.bulkCompute(Set, Function, NullaryFunction} method.
    */
   @Captor
@@ -152,7 +153,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Ehcache<String, String> ehcache = this.getEhcache(null);
     ehcache.removeAll(Collections.<String>emptySet());
     
-    verify(this.store, never()).bulkCompute(eq(Collections.<String>emptySet()), getAnyEntryIterableFunction());
+    verify(this.store, never()).bulkCompute(eq(Collections.<String>emptySet()), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(fakeStore.getEntryMap(), equalTo(originalStoreContent));
     verify(this.spiedResilienceStrategy, never()).removeAllFailure(eq(Collections.<String>emptySet()), any(CacheAccessException.class));
 
@@ -181,7 +182,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Ehcache<String, String> ehcache = this.getEhcache(this.cacheLoaderWriter);
     ehcache.removeAll(Collections.<String>emptySet());
 
-    verify(this.store, never()).bulkCompute(eq(Collections.<String>emptySet()), getAnyEntryIterableFunction());
+    verify(this.store, never()).bulkCompute(eq(Collections.<String>emptySet()), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(fakeStore.getEntryMap(), equalTo(originalStoreContent));
     assertThat(fakeLoaderWriter.getEntryMap(), equalTo(originalStoreContent));
     verify(this.cacheLoaderWriter, never()).deleteAll(eq(Collections.<String>emptySet()));
@@ -212,7 +213,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Set<String> contentUpdates = fanIn(KEY_SET_A, KEY_SET_C);
     ehcache.removeAll(contentUpdates);
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), equalTo(contentUpdates));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verifyZeroInteractions(this.spiedResilienceStrategy);
@@ -237,7 +238,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Ehcache<String, String> ehcache = this.getEhcache(null);
 
@@ -245,7 +246,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     ehcache.removeAll(contentUpdates);
 
     final InOrder ordered = inOrder(this.store, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.spiedResilienceStrategy)
@@ -277,7 +278,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     ehcache.removeAll(contentUpdates);
 
     final InOrder ordered = inOrder(this.store, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.spiedResilienceStrategy)
@@ -312,7 +313,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Set<String> contentUpdates = fanIn(KEY_SET_A, KEY_SET_C);
     ehcache.removeAll(contentUpdates);
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), equalTo(contentUpdates));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     assertThat(fakeLoaderWriter.getEntryMap(), equalTo(copyWithout(originalWriterContent, contentUpdates)));
@@ -339,7 +340,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -351,7 +352,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     ehcache.removeAll(contentUpdates);
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -393,7 +394,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -439,7 +440,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(expectedFailures));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), equalTo(contentUpdates));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     assertThat(fakeLoaderWriter.getEntryMap(), equalTo(copyWithout(originalWriterContent, expectedSuccesses)));
@@ -466,7 +467,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_C);
@@ -485,7 +486,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
 
@@ -535,7 +536,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
 
@@ -587,7 +588,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(expectedFailures));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -616,7 +617,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_C);
@@ -636,7 +637,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -695,7 +696,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -751,7 +752,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(contentUpdates));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -778,7 +779,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -797,7 +798,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(),
-        getAnyEntryIterableFunction());
+        getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -845,7 +846,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(),
-        getAnyEntryIterableFunction());
+        getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -884,7 +885,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Set<String> contentUpdates = fanIn(KEY_SET_A, KEY_SET_C, KEY_SET_D);
     ehcache.removeAll(contentUpdates);
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), equalTo(contentUpdates));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -912,7 +913,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -925,7 +926,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -965,7 +966,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1011,7 +1012,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(expectedFailures));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1039,7 +1040,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_D);
@@ -1059,7 +1060,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1109,7 +1110,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1160,7 +1161,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(expectedFailures));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1189,7 +1190,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_D);
@@ -1209,7 +1210,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1269,7 +1270,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
-    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    ordered.verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1326,7 +1327,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(contentUpdates));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1353,7 +1354,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -1372,7 +1373,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1420,7 +1421,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1459,7 +1460,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final Set<String> contentUpdates = fanIn(KEY_SET_B, KEY_SET_C);
     ehcache.removeAll(contentUpdates);
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), equalTo(contentUpdates));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1487,7 +1488,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -1500,7 +1501,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1540,7 +1541,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1586,7 +1587,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
       assertThat(e.getFailures().keySet(), Matchers.<Set<?>>equalTo(expectedFailures));
     }
 
-    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+    verify(this.store, atLeast(1)).bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1614,7 +1615,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_D);
@@ -1634,7 +1635,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1684,7 +1685,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1736,7 +1737,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, expectedSuccesses)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1765,7 +1766,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent, KEY_SET_D);
@@ -1786,7 +1787,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1847,7 +1848,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1905,7 +1906,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     }
 
     verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     assertThat(fakeStore.getEntryMap(), equalTo(copyWithout(originalStoreContent, contentUpdates)));
     verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -1932,7 +1933,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
     final FakeStore fakeStore = new FakeStore(originalStoreContent);
     this.store = spy(fakeStore);
     doThrow(new CacheAccessException("")).when(this.store)
-        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction());
+        .bulkCompute(getAnyStringSet(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
 
     final Map<String, String> originalWriterContent = getEntryMap(KEY_SET_B, KEY_SET_C, KEY_SET_D);
     final FakeCacheLoaderWriter fakeLoaderWriter = new FakeCacheLoaderWriter(originalWriterContent);
@@ -1951,7 +1952,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -2000,7 +2001,7 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
 
     final InOrder ordered = inOrder(this.store, this.cacheLoaderWriter, this.spiedResilienceStrategy);
     ordered.verify(this.store, atLeast(1))
-        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction());
+        .bulkCompute(this.bulkComputeSetCaptor.capture(), getAnyEntryIterableFunction(), getAnyEventNotificationService());
     assertThat(this.getBulkComputeArgs(), everyItem(isIn(contentUpdates)));
     // ResilienceStrategy invoked; no assertions about Store content
     ordered.verify(this.cacheLoaderWriter, atLeast(1)).deleteAll(getAnyStringIterable());
@@ -2061,6 +2062,16 @@ public class EhcacheBasicRemoveAllTest extends EhcacheBasicCrudBase {
   @SuppressWarnings("unchecked")
   private static Iterable<? extends String> getAnyStringIterable() {
     return any(Iterable.class);
+  }
+
+  /**
+   * Returns a Mockito {@code any} Matcher for a {@code CacheEventNotificationService}.
+   *
+   * @return a Mockito {@code any} matcher for {@code CacheEventNotificationService}
+   */
+  @SuppressWarnings("unchecked")
+  private static CacheEventNotificationService<String, String> getAnyEventNotificationService() {
+    return any(CacheEventNotificationService.class);
   }
 
   /**

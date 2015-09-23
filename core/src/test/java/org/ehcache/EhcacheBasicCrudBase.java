@@ -17,6 +17,7 @@ package org.ehcache;
 
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.CacheConfigurationBuilder;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.BulkCacheLoadingException;
 import org.ehcache.exceptions.BulkCacheWritingException;
@@ -545,15 +546,15 @@ public abstract class EhcacheBasicCrudBase {
      * {@inheritDoc}
      * <p/>
      * This method is implemented as
-     * <code>this.{@link #bulkCompute(Set, Function, NullaryFunction)
+     * <code>this.{@link Store#bulkCompute(Set, Function, NullaryFunction, CacheEventNotificationService)
      *    bulkCompute}(keys, remappingFunction, () -> { returns true; })</code>
      */
     @Override
     public Map<String, ValueHolder<String>> bulkCompute(
         final Set<? extends String> keys,
-        final Function<Iterable<? extends Map.Entry<? extends String, ? extends String>>, Iterable<? extends Map.Entry<? extends String, ? extends String>>> remappingFunction)
+        final Function<Iterable<? extends Entry<? extends String, ? extends String>>, Iterable<? extends Entry<? extends String, ? extends String>>> remappingFunction, final CacheEventNotificationService<String, String> eventNotificationService)
         throws CacheAccessException {
-      return this.bulkCompute(keys, remappingFunction, REPLACE_EQUAL_TRUE);
+      return this.bulkCompute(keys, remappingFunction, REPLACE_EQUAL_TRUE, eventNotificationService);
     }
 
     /**
@@ -566,7 +567,7 @@ public abstract class EhcacheBasicCrudBase {
     public Map<String, org.ehcache.spi.cache.Store.ValueHolder<String>> bulkCompute(
         final Set<? extends String> keys,
         final Function<Iterable<? extends Entry<? extends String, ? extends String>>, Iterable<? extends Entry<? extends String, ? extends String>>> remappingFunction,
-        final NullaryFunction<Boolean> replaceEqual)
+        final NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<String, String> eventNotificationService)
         throws CacheAccessException {
 
       final Map<String, ValueHolder<String>> resultMap = new LinkedHashMap<String, ValueHolder<String>>();
@@ -584,6 +585,7 @@ public abstract class EhcacheBasicCrudBase {
             replaceEqual);
 
         resultMap.put(key, newValue);
+        eventNotificationService.fireAllEvents();
       }
 
       return resultMap;

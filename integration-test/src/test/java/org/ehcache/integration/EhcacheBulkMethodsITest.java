@@ -20,6 +20,7 @@ import org.ehcache.CacheManager;
 import org.ehcache.CacheManagerBuilder;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.CacheConfigurationBuilder;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.exceptions.BulkCacheLoadingException;
 import org.ehcache.exceptions.BulkCacheWritingException;
 import org.ehcache.exceptions.CacheAccessException;
@@ -511,7 +512,7 @@ public class EhcacheBulkMethodsITest {
       final Copier defaultCopier = new IdentityCopier();
       return new OnHeapStore<K, V>(storeConfig, SystemTimeSource.INSTANCE, defaultCopier, defaultCopier) {
         @Override
-        public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException {
+        public Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException {
           throw new CacheAccessException("Problem trying to bulk compute");
         }
 

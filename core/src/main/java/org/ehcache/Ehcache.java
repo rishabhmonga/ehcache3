@@ -569,7 +569,7 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
     };
 
     try {
-      store.bulkCompute(entries.keySet(), computeFunction);
+      store.bulkCompute(entries.keySet(), computeFunction, eventNotificationService);
       addBulkMethodEntriesCount(BulkOps.PUT_ALL, actualPutCount.get());
       if (failures.isEmpty()) {
         putAllObserver.end(PutAllOutcome.SUCCESS);
@@ -579,7 +579,6 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
         putAllObserver.end(PutAllOutcome.FAILURE);
         throw cacheWritingException;
       }
-      eventNotificationService.fireAllEvents();
     } catch (CacheAccessException e) {
       try {
         if (cacheLoaderWriter == null) {
@@ -613,7 +612,7 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
           }
           return result.entrySet();
         }
-      });
+      }, eventNotificationService);
     } catch (CacheAccessException e) {
       resilienceStrategy.putAllFailure(entries, e, cacheWritingException);
     }
@@ -716,7 +715,7 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
       };
 
     try {
-      store.bulkCompute(keys, removalFunction);
+      store.bulkCompute(keys, removalFunction, eventNotificationService);
       addBulkMethodEntriesCount(BulkOps.REMOVE_ALL, actualRemoveCount.get());
       if (failures.isEmpty()) {
         removeAllObserver.end(RemoveAllOutcome.SUCCESS);
@@ -724,7 +723,6 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
         removeAllObserver.end(RemoveAllOutcome.FAILURE);
         throw new BulkCacheWritingException(failures, successes);
       }
-      eventNotificationService.fireAllEvents();
     } catch (CacheAccessException e) {
       try {
         if (cacheLoaderWriter == null) {
@@ -1238,7 +1236,7 @@ public class Ehcache<K, V> implements Cache<K, V>, UserManagedCache<K, V> {
             }
             return cacheLoaderWriterLoadAllForKeys(keys, loadFunction).entrySet();
           }            
-        });
+        }, eventNotificationService);
       } catch (CacheAccessException e) {
         throw newCacheLoadingException(e);
       }

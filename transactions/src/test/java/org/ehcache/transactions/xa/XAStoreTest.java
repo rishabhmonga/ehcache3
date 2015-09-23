@@ -21,6 +21,7 @@ import org.ehcache.config.StoreConfigurationImpl;
 import org.ehcache.config.copy.DefaultCopyProviderConfiguration;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.ehcache.expiry.Expiry;
@@ -74,6 +75,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Ludovic Orban
@@ -579,6 +581,7 @@ public class XAStoreTest {
     OffHeapStoreLifecycleHelper.init(offHeapStore);
     CacheStore<Long, SoftLock<String>> cacheStore = new CacheStore<Long, SoftLock<String>>(onHeapStore, offHeapStore);
     Journal<Long> journal = new TransientJournal<Long>();
+    CacheEventNotificationService<Long, String> eventNotificationService = mock(CacheEventNotificationService.class);
 
     XAStore<Long, String> xaStore = new XAStore<Long, String>(Long.class, String.class, cacheStore, transactionManagerWrapper, testTimeSource, journal, uniqueXAResourceId);
 
@@ -596,7 +599,7 @@ public class XAStoreTest {
           }
           return result.entrySet();
         }
-      });
+      }, eventNotificationService);
 
       assertThat(computedMap.size(), is(3));
       assertThat(computedMap.get(1L).value(), equalTo("stuff#1"));
@@ -630,7 +633,7 @@ public class XAStoreTest {
           }
           return result.entrySet();
         }
-      });
+      }, eventNotificationService);
 
       assertThat(computedMap.size(), is(3));
       assertThat(computedMap.get(0L).value(), equalTo("otherStuff#0"));

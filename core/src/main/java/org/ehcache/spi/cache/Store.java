@@ -20,6 +20,7 @@ import org.ehcache.Cache;
 import org.ehcache.config.EvictionPrioritizer;
 import org.ehcache.config.EvictionVeto;
 import org.ehcache.config.ResourcePools;
+import org.ehcache.events.CacheEventNotificationService;
 import org.ehcache.events.StoreEventListener;
 import org.ehcache.exceptions.CacheAccessException;
 import org.ehcache.expiry.Expiry;
@@ -298,10 +299,10 @@ public interface Store<K, V> extends ConfigurationChangeSupport {
   /**
    * Compute a value for every key passed in the {@link Set} {@code keys} argument, using the {@code remappingFunction} to compute the value.
    * <p>
-   * This is equivalent to calling {@link Store#bulkCompute(Set, Function, NullaryFunction)}
+   * This is equivalent to calling {@link Store#bulkCompute(Set, Function, NullaryFunction, CacheEventNotificationService)}
    * with a "replaceEquals" function that returns {@link Boolean#TRUE}
    */
-  Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction) throws CacheAccessException;  
+  Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException;  
   
   /**
    * Compute a value for every key passed in the {@link Set} {@code keys} argument, using the {@code remappingFunction} to compute the value.
@@ -317,16 +318,17 @@ public interface Store<K, V> extends ConfigurationChangeSupport {
    *
    * @param keys the keys to compute a new value for.
    * @param remappingFunction the function that generates new values.
-   * @param replaceEqual If the existing value in the store is {@link java.lang.Object#equals(Object)} to
+   * @param replaceEqual If the existing value in the store is {@link Object#equals(Object)} to
    *        the value returned from the mappingFunction this function will be invoked. If this function
-   *        returns {@link java.lang.Boolean#FALSE} then the existing entry in the store will not be replaced
+   *        returns {@link Boolean#FALSE} then the existing entry in the store will not be replaced
    *        with a new entry and the existing entry will have its access time updated 
+   * @param eventNotificationService
    * @return a {@link Map} of key/value pairs for each key in <code>keys</code> to the value computed.
    * @throws ClassCastException if the specified key(s) are not of the correct type ({@code K}). Also thrown if the given function produces
    *         entries with either incorrect key or value types   
    * @throws CacheAccessException
    */
-  Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual) throws CacheAccessException;
+  Map<K, ValueHolder<V>> bulkCompute(Set<? extends K> keys, Function<Iterable<? extends Map.Entry<? extends K, ? extends V>>, Iterable<? extends Map.Entry<? extends K, ? extends V>>> remappingFunction, NullaryFunction<Boolean> replaceEqual, final CacheEventNotificationService<K, V> eventNotificationService) throws CacheAccessException;
 
   /**
    * Compute a value for every key passed in the {@link Set} <code>keys</code> argument using the <code>mappingFunction</code>
